@@ -1,37 +1,53 @@
-[gd_scene load_steps=7 format=3 uid="uid://c8m8dufikri1f"]
+[gd_scene load_steps=6 format=3 uid="uid://c8m8dufikri1f"]
 
 [ext_resource type="PackedScene" uid="uid://cc1m2a1obsyn4" path="res://entities/characters/player/player_character.tscn" id="1_21ecr"]
+[ext_resource type="Texture2D" uid="uid://i2opd08bowhu" path="res://assets/textures/grid.tres" id="2_ej5xo"]
+[ext_resource type="Texture2D" uid="uid://cgkl404kn6vkf" path="res://assets/textures/texture_06.png" id="3_it47i"]
 
-[sub_resource type="FastNoiseLite" id="FastNoiseLite_5l2ow"]
-noise_type = 2
-frequency = 0.0638
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uaokg"]
+albedo_texture = ExtResource("2_ej5xo")
+uv1_triplanar = true
+uv1_world_triplanar = true
 
-[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_jejqm"]
-noise = SubResource("FastNoiseLite_5l2ow")
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ctlom"]
-albedo_color = Color(0.129412, 0.223529, 0.258824, 1)
-albedo_texture = SubResource("NoiseTexture2D_jejqm")
-
-[sub_resource type="BoxMesh" id="BoxMesh_y61hi"]
-material = SubResource("StandardMaterial3D_ctlom")
-size = Vector3(50, 1, 50)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_oy83y"]
-size = Vector3(50, 1, 50)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h8jbi"]
+albedo_texture = ExtResource("3_it47i")
+uv1_triplanar = true
+uv1_world_triplanar = true
 
 [node name="TestLevel" type="Node3D"]
 
-[node name="Floor" type="StaticBody3D" parent="."]
-
-[node name="Mesh" type="MeshInstance3D" parent="Floor"]
-mesh = SubResource("BoxMesh_y61hi")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
-shape = SubResource("BoxShape3D_oy83y")
-
 [node name="PlayerCharacter" parent="." instance=ExtResource("1_21ecr")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0521454, 0.5, -0.0820599)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7598, 0.5, -0.0820599)
+base_speed = 4.0
+sprint_speed = 8.0
+crouch_speed = 2.0
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.264445, 0.964401, 0, -0.964401, 0.264445, -11.8764, 9.16571, 25.1929)
+transform = Transform3D(1, 0, 0, 0, 0.264445, 0.964401, 0, -0.964401, 0.264445, 11.6093, 9.16571, 25.1929)
+
+[node name="CSGCombiner3D" type="CSGCombiner3D" parent="."]
+use_collision = true
+
+[node name="Floor" type="CSGBox3D" parent="CSGCombiner3D"]
+size = Vector3(400, 1, 400)
+material = SubResource("StandardMaterial3D_uaokg")
+
+[node name="Wall1" type="CSGBox3D" parent="CSGCombiner3D"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 25, -200)
+size = Vector3(400, 1, 50)
+material = SubResource("StandardMaterial3D_h8jbi")
+
+[node name="Wall2" type="CSGBox3D" parent="CSGCombiner3D"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 25, 200)
+size = Vector3(400, 1, 50)
+material = SubResource("StandardMaterial3D_h8jbi")
+
+[node name="Wall3" type="CSGBox3D" parent="CSGCombiner3D"]
+transform = Transform3D(-4.37114e-08, -1, -4.37114e-08, 0, -4.37114e-08, 1, -1, 4.37114e-08, 1.91069e-15, -200, 25, 0)
+size = Vector3(400, 1, 50)
+material = SubResource("StandardMaterial3D_h8jbi")
+
+[node name="Wall4" type="CSGBox3D" parent="CSGCombiner3D"]
+transform = Transform3D(-4.37114e-08, -1, -4.37114e-08, 0, -4.37114e-08, 1, -1, 4.37114e-08, 1.91069e-15, 200, 25, 0)
+size = Vector3(400, 1, 50)
+material = SubResource("StandardMaterial3D_h8jbi")
