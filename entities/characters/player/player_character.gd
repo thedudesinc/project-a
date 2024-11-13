@@ -285,7 +285,7 @@ func enter_normal_state():
 
 func enter_crouch_state():
 	#print("entering crouch state")
-	var prev_state = state
+	var _prev_state = state
 	state = "crouching"
 	speed = crouch_speed
 	CROUCH_ANIMATION.play("crouch")
@@ -334,7 +334,7 @@ func headbob_animation(moving):
 			HEADBOB_ANIMATION.play("RESET", 1)
 
 
-func _process(delta):
+func _process(_delta):
 	$UserInterface/DebugPanel.add_property("FPS", Performance.get_monitor(Performance.TIME_FPS), 0)
 	var status : String = state
 	if !is_on_floor():
