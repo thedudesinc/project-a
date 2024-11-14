@@ -238,6 +238,9 @@ func handle_head_rotation():
 
 
 func handle_state(moving):
+	if lean_state != "normal":
+		print("position : " + str(CAMERA.position))
+		print("rotation : " + str(CAMERA.rotation))
 	if sprint_enabled:
 		if sprint_mode == 0:
 			if Input.is_action_pressed(SPRINT) and state != "crouching":
