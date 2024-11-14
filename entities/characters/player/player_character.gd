@@ -36,6 +36,7 @@ extends CharacterBody3D
 @export var HEADBOB_ANIMATION : AnimationPlayer
 @export var JUMP_ANIMATION : AnimationPlayer
 @export var CROUCH_ANIMATION : AnimationPlayer
+@export var LEAN_ANIMATION : AnimationPlayer
 @export var COLLISION_MESH : CollisionShape3D
 
 @export_group("Controls")
@@ -45,6 +46,8 @@ extends CharacterBody3D
 @export var RIGHT : String = "move_right"
 @export var FORWARD : String = "move_forward"
 @export var BACKWARD : String = "move_backward"
+@export var LEAN_RIGHT : String = "lean_right"
+@export var LEAN_LEFT : String = "lean_left"
 ## By default this does not pause the game, but that can be changed in _process.
 @export var PAUSE : String = "pause"
 @export var CROUCH : String = "crouch"
@@ -60,6 +63,7 @@ extends CharacterBody3D
 @export_group("Feature Settings")
 ## Enable or disable jumping. Useful for restrictive storytelling environments.
 @export var jumping_enabled : bool = true
+@export var leaning_enabled : bool = true
 ## Wether the player can move in the air or not.
 @export var in_air_momentum : bool = true
 ## Smooths the feel of walking.
@@ -68,6 +72,7 @@ extends CharacterBody3D
 @export var crouch_enabled : bool = true
 @export_enum("Hold to Crouch", "Toggle Crouch") var crouch_mode : int = 0
 @export_enum("Hold to Sprint", "Toggle Sprint") var sprint_mode : int = 0
+@export_enum("Hold to Lean", "Toggle Lean") var lean_mode : int = 0
 ## Wether sprinting should effect FOV.
 @export var dynamic_fov : bool = true
 ## If the player holds down the jump button, should the player keep hopping.
@@ -87,6 +92,7 @@ var speed : float = base_speed
 var current_speed : float = 0.0
 # States: normal, crouching, sprinting
 var state : String = "normal"
+var lean_state : String = "normal"
 var low_ceiling : bool = false # This is for when the cieling is too low and the player needs to crouch.
 var was_on_floor : bool = true # Was the player on the floor last frame (for landing animation)
 
@@ -115,6 +121,7 @@ func _ready():
 	HEADBOB_ANIMATION.play("RESET")
 	JUMP_ANIMATION.play("RESET")
 	CROUCH_ANIMATION.play("RESET")
+	LEAN_ANIMATION.play("RESET")
 
 
 func change_reticle(reticle): # Yup, this function is kinda strange
@@ -256,6 +263,33 @@ func handle_state(moving):
 			elif state == "sprinting":
 				enter_normal_state()
 	
+	if leaning_enabled:
+		if lean_mode == 0:
+			if Input.is_action_pressed(LEAN_RIGHT) and state != "sprinting":
+				if lean_state != "leaning_right":
+					enter_lean_state("right")
+			elif lean_state == "leaning_right":
+				exit_lean_state()
+			if Input.is_action_pressed(LEAN_LEFT) and state != "sprinting":
+				if lean_state != "leaning_left":
+					enter_lean_state("left")
+			elif lean_state == "leaning_left":
+				exit_lean_state()
+		elif lean_mode == 1:
+			if Input.is_action_just_pressed(LEAN_RIGHT) and state != "sprinting":
+				match lean_state:
+					"normal":
+						enter_lean_state("right")
+					"leaning_right":
+						exit_lean_state()
+			if Input.is_action_just_pressed(LEAN_LEFT) and state != "sprinting":
+				match lean_state:
+					"normal":
+						enter_lean_state("left")
+					"leaning_left":
+						exit_lean_state()
+			
+	
 	if crouch_enabled:
 		if crouch_mode == 0:
 			if Input.is_action_pressed(CROUCH) and state != "sprinting":
@@ -280,12 +314,31 @@ func enter_normal_state():
 	var prev_state = state
 	if prev_state == "crouching":
 		CROUCH_ANIMATION.play_backwards("crouch")
+	if prev_state == "leaning_left":
+		LEAN_ANIMATION.play_backwards("lean_left")
+	if prev_state == "leaning_right":
+		LEAN_ANIMATION.play_backwards("lean_right")
 	state = "normal"
 	speed = base_speed
 
+func exit_lean_state():
+	var prev_state = lean_state
+	match prev_state:
+		"leaning_right":
+			LEAN_ANIMATION.play_backwards("lean_right")
+		"leaning_left":
+			LEAN_ANIMATION.play_backwards('lean_left')
+	lean_state = "normal"
+
+func enter_lean_state(lean_direction):
+	lean_state = "leaning_" + lean_direction
+	if lean_direction == "right":
+		LEAN_ANIMATION.play("lean_right")
+	if lean_direction == "left":
+		LEAN_ANIMATION.play("lean_left")
+
 func enter_crouch_state():
 	#print("entering crouch state")
-	var _prev_state = state
 	state = "crouching"
 	speed = crouch_speed
 	CROUCH_ANIMATION.play("crouch")
