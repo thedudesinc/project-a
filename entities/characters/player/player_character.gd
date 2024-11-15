@@ -32,6 +32,7 @@ extends CharacterBody3D
 @export_group("Nodes")
 ## The node that holds the camera. This is rotated instead of the camera for mouse input.
 @export var HEAD : Node3D
+@export var CAMERA_HOLDER : Node3D
 @export var CAMERA : Camera3D
 @export var HEADBOB_ANIMATION : AnimationPlayer
 @export var JUMP_ANIMATION : AnimationPlayer
@@ -238,9 +239,6 @@ func handle_head_rotation():
 
 
 func handle_state(moving):
-	if lean_state != "normal":
-		print("position : " + str(CAMERA.position))
-		print("rotation : " + str(CAMERA.rotation))
 	if sprint_enabled:
 		if sprint_mode == 0:
 			if Input.is_action_pressed(SPRINT) and state != "crouching":
@@ -267,30 +265,39 @@ func handle_state(moving):
 				enter_normal_state()
 	
 	if leaning_enabled:
-		if lean_mode == 0:
-			if Input.is_action_pressed(LEAN_RIGHT) and state != "sprinting":
-				if lean_state != "leaning_right":
-					enter_lean_state("right")
-			elif lean_state == "leaning_right":
-				exit_lean_state()
-			if Input.is_action_pressed(LEAN_LEFT) and state != "sprinting":
-				if lean_state != "leaning_left":
-					enter_lean_state("left")
-			elif lean_state == "leaning_left":
-				exit_lean_state()
-		elif lean_mode == 1:
-			if Input.is_action_just_pressed(LEAN_RIGHT) and state != "sprinting":
-				match lean_state:
-					"normal":
+		if !LEAN_ANIMATION.is_playing():
+			if lean_mode == 0:
+				if Input.is_action_pressed(LEAN_RIGHT) and state != "sprinting":
+					if lean_state == "normal":
 						enter_lean_state("right")
-					"leaning_right":
-						exit_lean_state()
-			if Input.is_action_just_pressed(LEAN_LEFT) and state != "sprinting":
-				match lean_state:
-					"normal":
+				else:
+					match lean_state:
+						"leaning_right":
+							exit_lean_state()
+						"leaning_right_crouch":
+							exit_lean_state()
+				if Input.is_action_pressed(LEAN_LEFT) and state != "sprinting":
+					if lean_state == "normal":
 						enter_lean_state("left")
-					"leaning_left":
-						exit_lean_state()
+				else:
+					match lean_state:
+						"leaning_left":
+							exit_lean_state()
+						"leaning_left_crouch":
+							exit_lean_state()
+			elif lean_mode == 1:
+				if Input.is_action_just_pressed(LEAN_RIGHT) and state != "sprinting":
+					match lean_state:
+						"normal":
+							enter_lean_state("right")
+						"leaning_right":
+							exit_lean_state()
+				if Input.is_action_just_pressed(LEAN_LEFT) and state != "sprinting":
+					match lean_state:
+						"normal":
+							enter_lean_state("left")
+						"leaning_left":
+							exit_lean_state()
 			
 	
 	if crouch_enabled:
@@ -315,12 +322,17 @@ func handle_state(moving):
 func enter_normal_state():
 	#print("entering normal state")
 	var prev_state = state
-	if prev_state == "crouching":
-		CROUCH_ANIMATION.play_backwards("crouch")
-	if prev_state == "leaning_left":
-		LEAN_ANIMATION.play_backwards("lean_left")
-	if prev_state == "leaning_right":
-		LEAN_ANIMATION.play_backwards("lean_right")
+	match prev_state:
+		"crouching":
+			CROUCH_ANIMATION.play_backwards("crouch")
+		"leaning_right":
+			LEAN_ANIMATION.play_backwards("lean_right")
+		"leaning_left":
+			LEAN_ANIMATION.play_backwards("lean_left")
+		"leaning_right_crouch":
+			LEAN_ANIMATION.play_backwards("lean_right_crouch")
+		"leaning_left_crouch":
+			LEAN_ANIMATION.play_backwards("lean_left_crouch")
 	state = "normal"
 	speed = base_speed
 
@@ -330,15 +342,20 @@ func exit_lean_state():
 		"leaning_right":
 			LEAN_ANIMATION.play_backwards("lean_right")
 		"leaning_left":
-			LEAN_ANIMATION.play_backwards('lean_left')
+			LEAN_ANIMATION.play_backwards("lean_left")
+		"leaning_right_crouch":
+			LEAN_ANIMATION.play_backwards("lean_right_crouch")
+		"leaning_left_crouch":
+			LEAN_ANIMATION.play_backwards("lean_left_crouch")
 	lean_state = "normal"
 
 func enter_lean_state(lean_direction):
 	lean_state = "leaning_" + lean_direction
-	if lean_direction == "right":
-		LEAN_ANIMATION.play("lean_right")
-	if lean_direction == "left":
-		LEAN_ANIMATION.play("lean_left")
+	var anim_name = "lean_" + lean_direction
+	if state == "crouching":
+		anim_name = anim_name + "_crouch"
+		lean_state = lean_state + "_crouch"
+	LEAN_ANIMATION.play(anim_name)
 
 func enter_crouch_state():
 	#print("entering crouch state")
